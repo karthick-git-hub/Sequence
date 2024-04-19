@@ -50,6 +50,7 @@ class ThreeStageProtocol(StackProtocol):
         ThreeStageProtocol.U_B = self.generate_unitary()
 
     def send_pulse(self):
+        self.alice_bits_encoded = []
         current_time = datetime.now()
         for bit_value in self.alice_bits:
             timestamp = current_time.strftime('%d-%b-%Y %H:%M:%S.%f')[:-3]
@@ -84,6 +85,7 @@ class ThreeStageProtocol(StackProtocol):
         ThreeStageProtocol.iterations_passed += 1
         self.own.destination = self.another.own.name
         self.attach_to_detector()
+        print(f"push {ThreeStageProtocol.iterations_passed}")
         if ThreeStageProtocol.iterations_passed == 1:
             alice_bits_encoded_copy = deepcopy(ThreeStageProtocol.alice_bits_encoded)
             U = ThreeStageProtocol.U_A
@@ -118,6 +120,7 @@ class ThreeStageProtocol(StackProtocol):
         ThreeStageProtocol.detection_data.append(info['photon'])
 
     def decoding(self):
+        print(f"length {len(ThreeStageProtocol.detection_data)} decoding {ThreeStageProtocol.detection_data}")
         self.decoding_bits(ThreeStageProtocol.detection_data)
         ThreeStageProtocol.iterations_passed = 0
 

@@ -116,7 +116,7 @@ class Detector(Entity):
                 self.record_detection_cow("detector3", photon)
 
     def getPhotonForThreeStage(self, detector_name: str, photon=None ):
-        self.record_detection_three_stage(detector_name, photon)
+        self.record_detection_three_stage(photon)
 
     def add_dark_count(self) -> None:
         """Method to schedule false positive detection events.
@@ -154,9 +154,9 @@ class Detector(Entity):
             self.notify({'time': time})
             self.next_detection_time = now + (1e12 / self.count_rate)  # period in ps
 
-    def record_detection_three_stage(self, detector_name:str, photon):
+    def record_detection_three_stage(self, photon):
         # Notify observers about the detection event
-        self.notify_observers({'photon': photon[0]})
+        self.notify_observers({'photon': photon})
 
     # For COW begin
     def record_detection_cow(self, detector_name:str, photon):
