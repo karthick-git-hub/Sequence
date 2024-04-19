@@ -185,9 +185,10 @@ class Node(Entity):
                     if isinstance(self.protocol_stack[0], ThreeStageProtocol):
                         self.components[self.first_component_name].detectors[0].getPhotonForThreeStage("detector1", qubit)
                     elif isinstance(self.protocol_stack[0],COWProtocol):
-                        if qubit[0][0] != []:
+                        print(f"inside node {qubit}")
+                        if qubit[0] != [] and qubit[0][0] != []:
                             if self.name.startswith("Node"):
-                                self.components[self.first_component_name].detectors[0].getPhoton("detector1", qubit[0])
+                                self.components[self.first_component_name].detectors[0].getPhoton("detector1", qubit)
                             else:
                                 if random.random() < 0.7:
                                    self.components[self.first_component_name].detectors[0].getPhoton("detector1", qubit)
@@ -665,5 +666,5 @@ class QKDNode(Node):
         qubit_list = []
         for photon in photons:
             qubit_list.append(self.send_qubit(self.destination, photon))
-        print(len(qubit_list))
+        print(f"length in custom get{len(qubit_list)} qubit_list {qubit_list}")
         self.qchannels[self.destination].receive_qubit_custom(qubit_list)
