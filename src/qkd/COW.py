@@ -63,6 +63,7 @@ class COWProtocol(StackProtocol):
         self.decoy_indices = np.random.choice(range(total_length), num_decoys, replace=False)
 
     def send_pulse(self):
+        COWProtocol.actual_alice_bits = []
         current_time = datetime.now()
         for bit_value in self.bit_sequence:
             encoded_sequence = self.encode_bit(bit_value)
@@ -83,11 +84,13 @@ class COWProtocol(StackProtocol):
                 new_alice_bits_with_vacuum.append((COWProtocol.decoy_sequence, timestamp))
             else:
                 encoded_sequence = self.encode_bit(self.bit_sequence[original_bit_index])
+                COWProtocol.actual_alice_bits.append((self.bit_sequence[original_bit_index], timestamp))
                 new_alice_bits_with_vacuum.append((encoded_sequence, timestamp))
                 original_bit_index += 1
             current_time += timedelta(milliseconds=1)
         self.alice_bits_with_vacuum = new_alice_bits_with_vacuum
         COWProtocol.alice_bits_with_vacuum = self.alice_bits_with_vacuum
+        print(f"length {len(COWProtocol.actual_alice_bits)}  COWProtocol.alice_bits_with_vacuum {COWProtocol.actual_alice_bits}")
 
     def encode_bit(self, bit):
         VACUUM = 'decoy'
@@ -98,7 +101,6 @@ class COWProtocol(StackProtocol):
 
     def push(self, key_num, rounds, run_time=np.inf):
         self.message_counter = 0
-        COWProtocol.actual_alice_bits = []
         self.own.destination = self.another.own.name
         COWProtocol.detection_data = {'dataline': [], 'DM1': [], 'DM2': []}
         self.attach_to_detector()
@@ -109,9 +111,6 @@ class COWProtocol(StackProtocol):
         print(f"Total with vacuum: {len(alice_bits_with_vacuum_copy)} alice_bits_with_vacuum --  {alice_bits_with_vacuum_copy}  round -- {rounds}")
         COWProtocol.channel_list = []
         lightsource.custom_emit(alice_bits_with_vacuum_copy)
-        for bit in alice_bits_with_vacuum_copy:
-            if bit[0] != COWProtocol.decoy_sequence:
-                COWProtocol.actual_alice_bits.append((self.measure(bit[0]), bit[1]))
 
 
     def pop(self, detector_index: int, time: int):
@@ -181,6 +180,7 @@ class COWProtocol(StackProtocol):
     def sifting_process(self, detection_data):
         COWProtocol.sifting_percentage = []
         dataline_entries = detection_data['dataline']
+        print(f"inside sifting {dataline_entries}")
         security_percentage = 0.0
         # Remove duplicates based on a specific key in each dictionary
         unique_entries = []
@@ -195,13 +195,14 @@ class COWProtocol(StackProtocol):
         print(f"length -- {len(sorted_dataline_entries)} dataline_entries {sorted_dataline_entries} ")
         raw_bob_bits = [(entry['photon'], entry['time']) for entry in sorted_dataline_entries]
         raw_key_bob = sorted(raw_bob_bits, key=lambda x: x[1])
-
         # Create a set of Bob's timestamps for quick lookup
         bob_timestamps = {bit[1] for bit in raw_key_bob}
 
         # Filter Alice's bits to include only those with timestamps matching Bob's
         raw_key_alice = [(bit, timestamp) for bit, timestamp in COWProtocol.actual_alice_bits if
                               timestamp in bob_timestamps]
+        print(f"length {len(raw_key_bob)}  raw_key_bob in sifting process {raw_key_bob}")
+        print(f"length {len(raw_key_alice)} raw_key_alice  in sifting process {raw_key_alice}")
 
         # Continue with the sifting process...
         random_bits = self.generate_random_bits(len(raw_key_bob))

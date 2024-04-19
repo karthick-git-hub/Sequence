@@ -9,14 +9,14 @@ distances = []
 average_sifting_percentages = []
 average_key_rates = []
 
-# Open and read the file
+# Open and read the entire file as a single JSON object
 with open(file_path, 'r') as file:
-    for line in file:
-        # Parse each line as a JSON object
-        entry = json.loads(line)
-        distances.append(entry['distance'])
-        average_sifting_percentages.append(entry['average_sifting_percentage'])
-        average_key_rates.append(entry['average_key_rate'])
+    data = json.load(file)  # Use json.load() to read the whole file
+    for key_rate in data:
+        for distance in data[key_rate]:
+            distances.append(int(distance))
+            average_sifting_percentages.append(data[key_rate][distance]['average_sifting_percentage'])
+            average_key_rates.append(data[key_rate][distance]['average_key_rate'])
 
 # Plotting the graphs
 # Plot for sifting percentage over distance
