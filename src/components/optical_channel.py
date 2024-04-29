@@ -209,37 +209,30 @@ class QuantumChannel(OpticalChannel):
 
     def transmit_cow_or_three_stage(self, qubit: "Photon", protocol: str) -> None:
         print(f"in qubit tranmit {qubit}")
+        qubit_new = deepcopy(self.introduce_errors(qubit, protocol))
         if 'qr' in self.name:
-            if random.random() > self.polarization_fidelity:
-                if protocol == "COW":
-                    qubit = self.introduceErrorsForCow(qubit)
-                else:
-                    qubit = self.introduceErrorsForThreeStage(qubit)
-            deep_copy_qubit = deepcopy(qubit)
-            return deep_copy_qubit
-
-        if random.random() > self.loss and  'qr' not in self.name:
-            # COW protocol specific transmission logic
-            future_time = self.timeline.now() + self.delay
-            if random.random() > self.polarization_fidelity:
-                if protocol == "COW":
-                    qubit = self.introduceErrorsForCow(qubit)
-                else:
-                    qubit = self.introduceErrorsForThreeStage(qubit)
-            deep_copy_qubit = deepcopy(qubit)
-            return deep_copy_qubit
-
+            return deepcopy(qubit_new)
+        else:
+            if random.random() > self.loss:
+                return deepcopy(qubit_new)
 
     def receive_qubit_custom(self, qubit_list):
         process = Process(self.receiver, "receive_qubit", qubit_list)
         event = Event(self.timeline.now() + self.delay, process)
         self.timeline.schedule(event)
 
+    def introduce_errors(self, qubit, protocol):
+        if random.random() < 0.3:
+            if protocol == "COW":
+                qubit = self.introduceErrorsForCow(qubit)
+            else:
+                qubit = self.introduceErrorsForThreeStage(qubit)
+        return qubit
 
     def introduceErrorsForCow(self, qubit):
         print(f" inside error for COW git ")
         updatedQubit = []
-        if random.random() > self.polarization_fidelity:
+        if random.random() < self.polarization_fidelity:
             if len(qubit) == 2 and isinstance(qubit[0][0], QuantumCircuit):
                 if qubit[0][0].data == []:
                     updatedQubit.append(self.qc_x)
@@ -249,12 +242,12 @@ class QuantumChannel(OpticalChannel):
                     updatedQubit.append(self.qc)
                     updatedQubit.append(qubit[0][1])
                     updatedQubit.append(self.qc)
-                return (updatedQubit, qubit[1])
+                return updatedQubit, qubit[1]
         else:
             updatedQubit.append(self.qc_amp_damp_error)
             updatedQubit.append(qubit[0][1])
             updatedQubit.append(self.qc_amp_damp_error)
-            return (updatedQubit, qubit[1])
+            return updatedQubit, qubit[1]
         return qubit
 
     def introduceErrorsForThreeStage(self, qubit):
